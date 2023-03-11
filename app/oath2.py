@@ -10,7 +10,8 @@ from .config import settings
 oath2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # SECRET_KEY
-# Algorithm, # Expiration Time of token
+# Algorithm,
+# # Expiration Time of token
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
