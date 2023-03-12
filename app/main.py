@@ -1,5 +1,4 @@
 
-import os
 from fastapi import FastAPI, Request, Response
 from . import models
 from .database import engine
@@ -7,22 +6,38 @@ from .routers import post, user, auth, vote
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
 
 # models.Base.metadata.create_all(bind=engine)
 
+app = FastAPI()
 
-# # origins = ["https://www.google.com", "https://www.youtube.com"]
-# origins = ["*"]
+# origins = ["https://www.google.com", "https://www.youtube.com"]
+origins = ["*"]
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+app.include_router(post.router)
+app.include_router(user.router)
+app.include_router(auth.router)
+app.include_router(vote.router)
+
+
+# path or route operation - decorator and function
+'''get path could be /login or /posts/vote - single slash just indicates root page'''
+# Request usually comes in with a GET method and depending on URL returns code
+
+
+@app.get("/")
+def read_root():
+    return {"message": "welcome to my api!!!!"}
+
 
 # app = FastAPI(
 #     openapi_url="/openapi.json",
@@ -33,35 +48,22 @@ from starlette.middleware.cors import CORSMiddleware
 # This section is required to fix the Authorize process in production
 
 
-middleware = [
-    Middleware(
-        CORSMiddleware,
-        allow_origins=['*'],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*']
-    )
-]
-
-app = FastAPI(middleware=middleware)
+# @app.middleware("http")
+# async def cors_handler(request: Request, call_next):
+#     response: Response = await call_next(request)
+#     response.headers['Access-Control-Allow-Credentials'] = 'true'
+#     # Instead of: 'Access-Control-Allow-Origin' = os.environ.get('allowedOrigins'):
+#     response.headers['Access-Control-Allow-Origin'] = "https://fastapi-production-75e6.up.railway.app, http://127.0.0.1:8000"
+#     response.headers['Access-Control-Allow-Methods'] = '*'
+#     response.headers['Access-Control-Allow-Headers'] = '*'
+#     return response
 
 
-@app.middleware("http")
-async def cors_handler(request: Request, call_next):
-    response: Response = await call_next(request)
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    # Instead of: 'Access-Control-Allow-Origin' = os.environ.get('allowedOrigins'):
-    response.headers['Access-Control-Allow-Origin'] = "https://fastapi-production-75e6.up.railway.app, http://127.0.0.1:8000"
-    response.headers['Access-Control-Allow-Methods'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = '*'
-    return response
-
-
-@app.middleware("http")
-async def TestCustomMiddleware(request: Request, call_next):
-    print("Middleware works!")
-    response = await call_next(request)
-    return response
+# @app.middleware("http")
+# async def TestCustomMiddleware(request: Request, call_next):
+#     print("Middleware works!")
+#     response = await call_next(request)
+#     return response
 
 
 # @app.middleware("http")
@@ -73,10 +75,10 @@ async def TestCustomMiddleware(request: Request, call_next):
 #     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
 #     return response
 
-origins = [
-    "https://fastapi-production-75e6.up.railway.app",
-    "http://127.0.0.1:8000",
-]
+# origins = [
+#     "https://fastapi-production-75e6.up.railway.app",
+#     "http://127.0.0.1:8000",
+# ]
 
 # app.add_middleware(CORSMiddleware,
 #                    allow_origins=origins,
@@ -95,22 +97,6 @@ origins = [
 #         allow_headers=['*']
 #     )
 # ]
-
-
-app.include_router(post.router)
-app.include_router(user.router)
-app.include_router(auth.router)
-app.include_router(vote.router)
-
-
-# path or route operation - decorator and function
-'''get path could be /login or /posts/vote - single slash just indicates root page'''
-# Request usually comes in with a GET method and depending on URL returns code
-
-
-@app.get("/")
-def read_root():
-    return {"message": "welcome to my api!!!!"}
 
 
 # Legacy code prior to routing endpoints via separate files
