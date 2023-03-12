@@ -1,14 +1,15 @@
 
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, Request, Response
 from . import models
 from .database import engine
 from .routers import post, user, auth, vote
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 # models.Base.metadata.create_all(bind=engine)
 
-# app = FastAPI()
 
 # # origins = ["https://www.google.com", "https://www.youtube.com"]
 # origins = ["*"]
@@ -21,36 +22,66 @@ from fastapi.middleware.cors import CORSMiddleware
 #     allow_headers=["*"],
 # )
 
-app = FastAPI(
-    openapi_url="/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
-)
+# app = FastAPI(
+#     openapi_url="/openapi.json",
+#     docs_url="/docs",
+#     redoc_url="/redoc",
+# )
 
 # This section is required to fix the Authorize process in production
 
+app = FastAPI()
+
+
+@app.middleware("https")
+async def cors_handler(request: Request, call_next):
+    response: Response = await call_next(request)
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    # Instead of: 'Access-Control-Allow-Origin' = os.environ.get('allowedOrigins'):
+    response.headers['Access-Control-Allow-Origin'] = "https://fastapi-production-75e6.up.railway.app, http://127.0.0.1:8000"
+    response.headers['Access-Control-Allow-Methods'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    return response
+
 
 @app.middleware("http")
-async def add_cors_headers(request, call_next):
+async def TestCustomMiddleware(request: Request, call_next):
+    print("Middleware works!")
     response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "https://fastapi-production-75e6.up.railway.app, http://127.0.0.1:8000"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     return response
+
+
+# @app.middleware("http")
+# async def add_cors_headers(request, call_next):
+#     response = await call_next(request)
+#     response.headers["Access-Control-Allow-Origin"] = "https://fastapi-production-75e6.up.railway.app, http://127.0.0.1:8000"
+#     response.headers["Access-Control-Allow-Credentials"] = "true"
+#     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+#     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+#     return response
 
 origins = [
     "https://fastapi-production-75e6.up.railway.app",
     "http://127.0.0.1:8000",
 ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware,
+                   allow_origins=origins,
+                   allow_credentials=True,
+                   allow_methods=["*"],
+                   allow_headers=["*"],
+
+                   )
+
+# middleware = [
+#     Middleware(
+#         CORSMiddleware,
+#         allow_origins=['*'],
+#         allow_credentials=True,
+#         allow_methods=['*'],
+#         allow_headers=['*']
+#     )
+# ]
 
 
 app.include_router(post.router)
