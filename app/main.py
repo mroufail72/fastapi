@@ -7,6 +7,8 @@ from .routers import post, user, auth, vote
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 # models.Base.metadata.create_all(bind=engine)
 
@@ -30,10 +32,21 @@ from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 # This section is required to fix the Authorize process in production
 
-app = FastAPI()
+
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*']
+    )
+]
+
+app = FastAPI(middleware=middleware)
 
 
-@app.middleware("https")
+@app.middleware("http")
 async def cors_handler(request: Request, call_next):
     response: Response = await call_next(request)
     response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -65,13 +78,13 @@ origins = [
     "http://127.0.0.1:8000",
 ]
 
-app.add_middleware(CORSMiddleware,
-                   allow_origins=origins,
-                   allow_credentials=True,
-                   allow_methods=["*"],
-                   allow_headers=["*"],
+# app.add_middleware(CORSMiddleware,
+#                    allow_origins=origins,
+#                    allow_credentials=True,
+#                    allow_methods=["*"],
+#                    allow_headers=["*"],
 
-                   )
+#                    )
 
 # middleware = [
 #     Middleware(
